@@ -1,6 +1,8 @@
 import { dedupeMixin } from '@lion/core';
 import { InteractionStateMixin, FormRegistrarMixin } from '@lion/field';
 
+// TODO: remove InteractionStateMixin
+
 export const ChoiceGroupMixin = dedupeMixin(
   superclass =>
     // eslint-disable-next-line
@@ -58,20 +60,6 @@ export const ChoiceGroupMixin = dedupeMixin(
         this._isChoiceGroup = true; // configures event propagation logic of FormControlMixin
       }
 
-      connectedCallback() {
-        super.connectedCallback();
-        if (!this.multipleChoice) {
-          this.addEventListener('model-value-changed', this._checkSingleChoiceElements);
-        }
-      }
-
-      disconnectedCallback() {
-        super.disconnectedCallback();
-        if (!this.multipleChoice) {
-          this.removeEventListener('model-value-changed', this._checkSingleChoiceElements);
-        }
-      }
-
       /**
        * @override from FormRegistrarMixin
        */
@@ -123,19 +111,16 @@ export const ChoiceGroupMixin = dedupeMixin(
         return false;
       }
 
-      _checkSingleChoiceElements(ev) {
-        const { target } = ev;
-        if (target.checked === false) return;
-
-        const groupName = target.name;
-        this.formElements
-          .filter(i => i.name === groupName)
-          .forEach(choice => {
-            if (choice !== target) {
-              choice.checked = false; // eslint-disable-line no-param-reassign
-            }
-          });
-        this.__triggerCheckedValueChanged();
+      _onBeforeRepropagateChildrenValues(ev) {
+        if (this.multipleChoice || !ev.target.checked) {
+          return;
+        }
+        this.formElements.forEach(option => {
+          if (ev.target.choiceValue !== option.choiceValue) {
+            option.checked = false; // eslint-disable-line no-param-reassign
+          }
+        });
+        this.__setChoiceGroupTouched();
       }
 
       _getCheckedElements() {
@@ -158,9 +143,10 @@ export const ChoiceGroupMixin = dedupeMixin(
         }
       }
 
-      __triggerCheckedValueChanged() {
+      __setChoiceGroupTouched() {
         const value = this.modelValue;
         if (value != null && value !== this.__previousCheckedValue) {
+          // TODO: what happens here exactly. Needs to be based on user interaction (?)
           this.touched = true;
           this.__previousCheckedValue = value;
         }

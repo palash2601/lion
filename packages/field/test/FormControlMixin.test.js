@@ -179,4 +179,82 @@ describe('FormControlMixin', () => {
         .getAttribute('aria-live'),
     ).to.equal('polite');
   });
+
+  describe('Model-value-changed event propagation', () => {
+    it('stops propagation of child events and redispatches from host', async () => {
+      let eventForm;
+      let eventFieldset;
+      let countForm = 0;
+      let countFieldset = 0;
+
+      function formHandler(ev) {
+        eventForm = ev;
+        countForm += 1;
+      }
+      function fieldsetHandler(ev) {
+        eventFieldset = ev;
+        countFieldset += 1;
+      }
+      const formEl = await fixture(html`
+        <${tag} id="form" @model-value-changed=${formHandler}>
+          <${tag} id="fieldset" @model-value-changed=${fieldsetHandler}>
+            <${tag} id="field"></${tag}>
+          </${tag}>
+        </${tag}>
+      `);
+      const fieldEl = formEl.querySelector('#field');
+      const fieldsetEl = formEl.querySelector('#fieldset');
+
+      fieldEl.dispatchEvent(new Event('model-value-changed', { bubbles: true }));
+      expect(countFieldset).to.equal(1);
+      expect(eventFieldset.target).to.equal(fieldsetEl);
+      expect(eventFieldset.detail.formPath).to.eql([fieldEl, fieldsetEl]);
+
+      expect(countForm).to.equal(1);
+      expect(eventForm.target).to.equal(formEl);
+      expect(eventForm.detail.formPath).to.eql([fieldEl, fieldsetEl, formEl]);
+    });
+
+    it('sends one event for single select choice-groups', async () => {
+      let eventForm;
+      let countForm = 0;
+      let eventChoiceGroup;
+      let countChoiceGroup = 0;
+
+      function formHandler(ev) {
+        eventForm = ev;
+        countForm += 1;
+      }
+      function choiceGroupHandler(ev) {
+        eventChoiceGroup = ev;
+        countChoiceGroup += 1;
+      }
+
+      const formEl = await fixture(html`
+        <${tag} id="form" @model-value-changed=${formHandler}>
+          <${tag} id="choice-group" ._isChoiceGroup=${true} @model-value-changed=${choiceGroupHandler}>
+            <${tag} id="option1" .checked=${true}></${tag}>
+            <${tag} id="option2"></${tag}>
+          </${tag}>
+        </${tag}>
+      `);
+      const choiceGroupEl = formEl.querySelector('#choice-group');
+      const option1El = formEl.querySelector('#option1');
+      const option2El = formEl.querySelector('#option2');
+
+      // Simulate check
+      option2El.checked = true;
+      option2El.dispatchEvent(new Event('model-value-changed', { bubbles: true }));
+      option1El.checked = false;
+      option1El.dispatchEvent(new Event('model-value-changed', { bubbles: true }));
+
+      expect(countChoiceGroup).to.equal(1);
+      expect(eventChoiceGroup.target).to.equal(choiceGroupEl);
+      expect(eventChoiceGroup.detail.formPath).to.eql([choiceGroupEl]);
+
+      expect(countForm).to.equal(1);
+      expect(eventForm.target).to.equal(formEl);
+      expect(eventForm.detail.formPath).to.eql([choiceGroupEl, formEl]);
+    });
+  });
 });
