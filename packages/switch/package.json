@@ -15,6 +15,7 @@
   },
   "scripts": {
     "prepublishOnly": "../../scripts/npm-prepublish.js",
+    "start": "cd ../../ && yarn dev-server --open packages/switch/README.md",
     "test": "cd ../../ && yarn test --grep \"packages/switch/test/**/*.test.js\"",
     "test:watch": "cd ../../ && yarn test:watch --grep \"packages/switch/test/**/*.test.js\""
   },

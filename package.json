@@ -8,7 +8,8 @@
   "devDependencies": {
     "@commitlint/cli": "^7.0.0",
     "@commitlint/config-conventional": "^7.0.0",
-    "@open-wc/demoing-storybook": "^1.10.4",
+    "@mdjs/core": "^0.1.6",
+    "@open-wc/demoing-storybook": "^1.15.1",
     "@open-wc/eslint-config": "^1.0.0",
     "@open-wc/prettier-config": "^0.1.0",
     "@open-wc/testing": "^2.5.0",
@@ -35,9 +36,10 @@
     "whatwg-fetch": "^3.0.0"
   },
   "scripts": {
+    "dev-server": "es-dev-server",
     "start": "npm run storybook",
-    "storybook": "start-storybook -p 9001",
-    "storybook:build": "build-storybook",
+    "storybook": "start-storybook --experimental-md-docs",
+    "storybook:build": "build-storybook --experimental-md-docs",
     "test": "karma start --coverage",
     "test:watch": "karma start --auto-watch=true --single-run=false",
     "test:update-snapshots": "karma start --update-snapshots",
