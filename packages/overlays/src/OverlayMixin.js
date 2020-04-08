@@ -86,10 +86,12 @@ export const OverlayMixin = dedupeMixin(
       updated(changedProperties) {
         super.updated(changedProperties);
 
-        if (changedProperties.has('opened')) {
-          if (this._overlayCtrl) {
-            this.__syncToOverlayController();
-          }
+        if (
+          changedProperties.has('opened') &&
+          this._overlayCtrl &&
+          !this.__blockSyncToOverlayCtrl
+        ) {
+          this.__syncToOverlayController();
         }
       }
 
@@ -210,6 +212,13 @@ export const OverlayMixin = dedupeMixin(
         this._overlayCtrl.teardown();
       }
 
+      async _setOpenedWithoutPropertyEffects(newOpened) {
+        this.__blockSyncToOverlayCtrl = true;
+        this.opened = newOpened;
+        await this.updateComplete;
+        this.__blockSyncToOverlayCtrl = false;
+      }
+
       __setupSyncFromOverlayController() {
         this.__onOverlayCtrlShow = () => {
           this.opened = true;
@@ -223,10 +232,7 @@ export const OverlayMixin = dedupeMixin(
           const event = new CustomEvent('before-opened', { cancelable: true });
           this.dispatchEvent(event);
           if (event.defaultPrevented) {
-            // Check whether our current opened state is not out of sync with overlayCtrl
-            // TODO: quick and dirty way to bypass prop effects (updated). Fix in a nice
-            // way, wihtoutrelying on implementation details of UpdatingElement.
-            this.__opened = this._overlayCtrl.isShown;
+            this._setOpenedWithoutPropertyEffects(this._overlayCtrl.isShown);
             beforeShowEvent.preventDefault();
           }
         };
@@ -235,10 +241,7 @@ export const OverlayMixin = dedupeMixin(
           const event = new CustomEvent('before-closed', { cancelable: true });
           this.dispatchEvent(event);
           if (event.defaultPrevented) {
-            // Check whether our current opened state is not out of sync with overlayCtrl
-            // TODO: quick and dirty way to bypass prop effects (updated). Fix in a nice
-            // way, wihtoutrelying on implementation details of UpdatingElement.
-            this.__opened = this._overlayCtrl.isShown;
+            this._setOpenedWithoutPropertyEffects(this._overlayCtrl.isShown);
             beforeHideEvent.preventDefault();
           }
         };
