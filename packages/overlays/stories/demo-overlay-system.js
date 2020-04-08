@@ -11,7 +11,9 @@ class DemoOverlaySystem extends OverlayMixin(LitElement) {
   _setupOpenCloseListeners() {
     super._setupOpenCloseListeners();
     this.__toggle = () => {
+      console.log(this.opened);
       this.opened = !this.opened;
+      console.log(this.opened);
     };
 
     if (this._overlayInvokerNode) {
@@ -32,6 +34,7 @@ class DemoOverlaySystem extends OverlayMixin(LitElement) {
       <slot name="invoker"></slot>
       <slot name="content"></slot>
       <slot name="_overlay-shadow-outlet"></slot>
+      <div>popup is ${this.opened ? 'opened' : 'closed'}</div>
     `;
   }
 }
